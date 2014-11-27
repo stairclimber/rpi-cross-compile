@@ -3,7 +3,7 @@
 # Basic config...
 ################ WARNING ############################
 # THIS CHROOT VAR MUST BE SET !!!!!!!! be warned or it WILL break your system :)
-CHROOT="/opt/db_raspbian"
+CHROOT=${CHROOT:-"/opt/db_raspbian"}
 # use mirrorbrain be nice to raspbian project...
 MIRROR=http://mirrordirector.raspbian.org/raspbian
 #MIRROR=http://archive.raspbian.org/raspbian
@@ -44,6 +44,11 @@ done
 
 if [ $(id -u) -ne 0 ]; then 
 	do_log "Sorry must run as root" && exit -1
+fi
+
+# Sanity check that the CHROOT variable is really set
+if [ -z "${CHROOT:-}" ]; then
+	do_log "CHROOT variable must be set" && exit -1
 fi
 
 # let's make sure chroot dir is there
