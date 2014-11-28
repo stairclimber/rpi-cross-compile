@@ -62,13 +62,13 @@ LC_ALL=C
 export CHROOT XBINS QEMU_CPU LC_ALL ADDITIONAL_PACKAGES MIRROR
 
 # don't run if basic arm runtime system is not possible
-NOBINFMT=0
+BINFMT_FOUND=0
 for fmt in  qemu-arm arm ;do
-	if [ ! -f /proc/sys/fs/binfmt_misc/${fmt} ];then
-		NOBINFMT=$(($NOBINFMT + 1))
+	if [ -f /proc/sys/fs/binfmt_misc/${fmt} ];then
+		BINFMT_FOUND=$(($BINFMT_FOUND + 1))
 	fi
 done
-if [ $NOBINFMT -ne 1 ] ; then
+if [ $BINFMT_FOUND -lt 1 ] ; then
 	do_log "binfmt is not set please run your distribution setup procedure"
 	do_log "binfmt support must be running for this to work...." && exit -1
 fi
