@@ -8,7 +8,7 @@ CHROOT=${CHROOT:-"/opt/db_raspbian"}
 MIRROR=http://mirrordirector.raspbian.org/raspbian
 #MIRROR=http://archive.raspbian.org/raspbian
 XBINS="true false ls sort cp make chmod chown grep gunzip gzip mkdir mktemp rm sed seq"
-XBINS+=" debootstrap tar m4 test uniq xargs xz fold md5sum bash"
+XBINS+=" debootstrap tar m4 test uniq xargs xz fold md5sum bash unzip"
 # binaries which arm binaries in chrooted environment
 QEMU_BINARIES="qemu-arm qemu-arm-binfmt qemu-arm-static"
 # which packages you would like to have in chroot environment by default
