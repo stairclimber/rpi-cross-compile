@@ -8,7 +8,7 @@ CHROOT=${CHROOT:-"/opt/db_raspbian"}
 MIRROR=http://mirrordirector.raspbian.org/raspbian
 #MIRROR=http://archive.raspbian.org/raspbian
 XBINS="true false ls sort cp make chmod chown grep gunzip gzip mkdir mktemp rm sed seq"
-XBINS+=" debootstrap tar m4 test uniq xargs xz fold md5sum bash unzip"
+XBINS+=" debootstrap tar m4 test uniq xargs xz fold md5sum bash unzip wget curl"
 # binaries which arm binaries in chrooted environment
 QEMU_BINARIES="qemu-arm qemu-arm-binfmt qemu-arm-static"
 # which packages you would like to have in chroot environment by default
@@ -33,6 +33,27 @@ function get_ldd_lib () {
 	echo $(ldd $1 |grep '> /'|cut -d ' ' -f 3)
 }
 
+function git_archive_download () {
+	local download_url="$1"
+	local target_file="$2"
+	local needs_download=1
+
+	# We have to use a workaround until GitHub supports
+	# If-None-Match for the archive downloads.
+	if [ -f "${target_file}" ]; then
+		# Target file already exists
+		local local_commit_id=`unzip -qqq -z "${target_file}"`
+		local remote_commit_id=`curl --silent --fail --location --head --url "${download_url}" | sed -n '/ETag: \(.*\)"/ s/ETag: "\(.*\)"/\1/ p'`
+
+		if [ "${local_commit_id}" == "${remote_commit_id}" ]; then
+			needs_download=0
+		fi
+	fi
+
+	if [ ${needs_download} -eq 1 ]; then
+		curl --location --output "${target_file}" --url "${download_url}"
+	fi
+}
 
 # sanity check of native host binaries
 for program in ${XBINS}; do
@@ -118,7 +139,7 @@ ALL_LIBS=$(ldconfig -p|egrep '(libnss_|ld-|libnsl|libz)'|cut -d '>' -f 2)
 if [ -f /opt/master.zip ]; then
 	cp /opt/master.zip ${CHROOT}
 else
-	(cd ${CHROOT} ; wget https://github.com/raspberrypi/tools/archive/master.zip)
+	(cd ${CHROOT} ; git_archive_download https://github.com/raspberrypi/tools/archive/master.zip master.zip)
 fi
 #### security precaution for case that master.zip failed for some reason to be downloaded all destructive operations are done in correct place
 set -e
