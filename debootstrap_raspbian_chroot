@@ -66,13 +66,13 @@ function git_archive_download () {
 
 # sanity check of native host binaries
 for program in ${XBINS}; do
-	which ${program} > /dev/null 2> /dev/null 
+	which ${program} > /dev/null 2> /dev/null
 	if [ $? -ne 0 ]; then
 		do_log "missing '${program}' on your host machine please install it" && exit -1
 	fi
 done
 
-if [ $(id -u) -ne 0 ]; then 
+if [ $(id -u) -ne 0 ]; then
 	do_log "Sorry must run as root" && exit -1
 fi
 
@@ -107,10 +107,10 @@ fi
 mkdir -p ${CHROOT}/proc ${CHROOT}/usr/bin ${CHROOT}/usr/sbin
 NOQEMU=0
 for qemu_bin in ${QEMU_BINARIES}; do
-        if [ -x "$(which ${qemu_bin} 2>/dev/null)" ]; then
-                cp -a $(which ${qemu_bin}) ${CHROOT}/usr/bin/
-                NOQEMU=$(($NOQEMU + 1))
-        fi
+	if [ -x "$(which ${qemu_bin} 2>/dev/null)" ]; then
+			cp -a $(which ${qemu_bin}) ${CHROOT}/usr/bin/
+			NOQEMU=$(($NOQEMU + 1))
+	fi
 done
 if [ $NOQEMU -eq 0 ] ; then
 	do_log "You must have some of above mentioned binaries for this to work..." && exit -1
@@ -167,7 +167,7 @@ ALL_LIBS=" ${ALL_LIBS} $(get_ldd_lib ${CHROOT}/tools-master/arm-bcm2708/gcc-lina
 set +e
 ch_exec 'uname -a'
 if [ $? -ne 0 ]; then
-        do_log "chroot not set correctly please check output of command from above" && exit -1
+	do_log "chroot not set correctly please check output of command from above" && exit -1
 fi
 
 do_log "Replace arm binaries with host ${CPU} alternatives"
