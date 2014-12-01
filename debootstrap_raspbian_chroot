@@ -12,10 +12,19 @@ XBINS+=" debootstrap tar m4 test uniq xargs xz fold md5sum bash unzip wget curl"
 # binaries which arm binaries in chrooted environment
 QEMU_BINARIES="qemu-arm qemu-arm-binfmt qemu-arm-static"
 # which packages you would like to have in chroot environment by default
-ADDITIONAL_PACKAGES="coreutils joe less openssh-client openssh-server gcc libc6-dev git"
-ADDITIONAL_PACKAGES+=" libsqlite3-dev autoconf automake devscripts gawk g++ git-core"
-ADDITIONAL_PACKAGES+=" libjpeg62-dev libncurses5-dev libtool make python-dev gawk pkg-config"
-ADDITIONAL_PACKAGES+=" libperl-dev libgdbm-dev libdb-dev gettext sudo libsqlite3-dev"
+INSTALL_ADDITIONAL_PACKAGES=0
+ADDITIONAL_PACKAGES="coreutils less sudo gawk"
+ADDITIONAL_PACKAGES+=" gcc g++ gettext libc6-dev git git-core"
+ADDITIONAL_PACKAGES+=" autoconf automake devscripts libtool make pkg-config"
+
+if [ ${INSTALL_ADDITIONAL_PACKAGES} -eq 1 ]; then
+	ADDITIONAL_PACKAGES+=" joe"
+	ADDITIONAL_PACKAGES+=" openssh-client openssh-server"
+	ADDITIONAL_PACKAGES+=" libsqlite3-dev libgdbm-dev libdb-dev"
+	ADDITIONAL_PACKAGES+=" libjpeg62-dev libncurses5-dev"
+	ADDITIONAL_PACKAGES+=" libperl-dev"
+	ADDITIONAL_PACKAGES+=" python-dev"
+fi
 
 function do_log {
 	echo "$(date +'%Y-%m-%d %T') $1"
