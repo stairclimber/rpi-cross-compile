@@ -36,6 +36,9 @@ fi
 set -o errexit
 set -o nounset
 
+# Inherit the ERR trap to functions and subshells
+set -o errtrace
+
 ### Utilities
 #####################################################################
 
@@ -76,6 +79,26 @@ function git_archive_download () {
 		curl --location --output "${target_file}" --url "${download_url}"
 	fi
 }
+
+function print_stacktrace () {
+  local frame=0
+  while caller ${frame}; do
+	frame=$((frame+1));
+  done
+}
+
+function log_on_error() {
+	do_log "An error happened."
+	echo "=== Stacktrace ==="
+	print_stacktrace
+	echo "=================="
+}
+trap log_on_error ERR
+
+function cleanup_before_exit () {
+  do_log "Cleaning up. Done"
+}
+trap cleanup_before_exit EXIT
 
 ### Actual chroot creation code
 #####################################################################
@@ -196,6 +219,8 @@ section:setup_debootstrap() {
 }
 
 __mount_proc() {
+	__unmount_proc || true
+
 	# mount proc as it is required by this process
 	mount proc -t proc "${CHROOT}/proc" && do_log "Mounting proc on ${CHROOT}/proc"
 }
