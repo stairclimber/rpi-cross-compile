@@ -170,7 +170,7 @@ if [ $? -ne 0 ]; then
 	do_log "chroot not set correctly please check output of command from above" && exit -1
 fi
 
-do_log "Replace arm binaries with host ${CPU} alternatives"
+do_log "Replace arm binaries with host ${xarch} alternatives"
 for executable in $XBINS ; do
 	CBIN=$(ch_exec "which ${executable}")
 	XBIN=$(which ${executable})
