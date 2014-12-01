@@ -84,6 +84,7 @@ export CHROOT XBINS QEMU_CPU LC_ALL ADDITIONAL_PACKAGES MIRROR
 	section:setup_debootstrap
 	section:install_required_software
 	section:apply_additional_patches
+	section:cleanup
 
 	do_log "Everything done enjoy"
 }
@@ -181,7 +182,15 @@ section:setup_debootstrap() {
 
 __mount_proc() {
 	# mount proc as it is required by this process
-	mount proc -t proc ${CHROOT}/proc && do_log "Mounting proc on ${CHROOT}/proc"
+	mount proc -t proc "${CHROOT}/proc" && do_log "Mounting proc on ${CHROOT}/proc"
+}
+
+__unmount_proc() {
+	# unmount proc (called by section:cleanup)
+	if umount -t proc "${CHROOT}/proc";
+	then do_log "Unmount proc from ${CHROOT}/proc"
+	else do_log "Failed to unmount proc from ${CHROOT}/proc"
+	fi
 }
 
 __patch_policy_rc() {
@@ -197,7 +206,9 @@ EOF
 
 __setup_debootstrap_chroot() {
 	do_log "Calling debootstrap to setup the chroot environment..."
-	set -x; debootstrap --no-check-gpg --arch=armhf --verbose wheezy ${CHROOT} ${MIRROR}; set +x
+	set -x
+	debootstrap --no-check-gpg --arch=armhf --verbose wheezy ${CHROOT} ${MIRROR}
+	set +x
 }
 
 # -----------------------------------------------
@@ -379,8 +390,16 @@ alias ...="cd ../.."
 EOF
 }
 
-# -----------------------------------------------
+# ------------------------------------------------
+# Do all necessary cleanup actions like unmounting
+# ${CHROOT}/dev/proc
+# ------------------------------------------------
+section:cleanup() {
+	__unmount_proc
+}
+
+# ------------------------------------------------
 # The ':all' function is the entrypoint to
 # everything else in this bash script
-# -----------------------------------------------
+# ------------------------------------------------
 :all
