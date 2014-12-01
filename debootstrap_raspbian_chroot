@@ -27,6 +27,18 @@ if [ ${INSTALL_ADDITIONAL_PACKAGES} -eq 1 ]; then
 	ADDITIONAL_PACKAGES+=" python-dev"
 fi
 
+### Runtime
+#####################################################################
+
+# Exit on error. Append ||true if you expect an error.
+# set -e is safer than #!/bin/bash -e because that is neutralised if
+# someone runs your script like `bash yourscript.sh`
+set -o errexit
+set -o nounset
+
+### Utilities
+#####################################################################
+
 function do_log {
 	echo "$(date +'%Y-%m-%d %T') $1"
 }
@@ -64,6 +76,9 @@ function git_archive_download () {
 		curl --location --output "${target_file}" --url "${download_url}"
 	fi
 }
+
+### Actual chroot creation code
+#####################################################################
 
 # Emulate correct arm CPU
 QEMU_CPU=arm1176
