@@ -248,8 +248,11 @@ __validate_and_prepare_qemu() {
 # -------------------------------------
 section:setup_debootstrap() {
 	__mount_proc
-	__patch_policy_rc
 	__setup_debootstrap_chroot
+	__patch_policy_rc
+	__patch_initctl
+	__clean_apt
+	__patch_apt_conf
 }
 
 __mount_proc() {
@@ -267,17 +270,6 @@ __unmount_proc() {
 	fi
 }
 
-__patch_policy_rc() {
-	# don't run service on install
-	cat > ${CHROOT}/usr/sbin/policy-rc.d << EOF
-#!/bin/sh
-echo "All runlevel operations denied by policy" >&2
-exit 101
-EOF
-
-	chmod +x ${CHROOT}/usr/sbin/policy-rc.d
-}
-
 __setup_debootstrap_chroot() {
 	do_log "Calling debootstrap to setup the chroot environment..."
 
@@ -292,6 +284,45 @@ __setup_debootstrap_chroot() {
 	set -x
 	debootstrap --no-check-gpg --arch=armhf ${extra_args} --verbose wheezy ${CHROOT} ${MIRROR}
 	set +x
+}
+
+__patch_policy_rc() {
+	# don't run service on install
+	cat > ${CHROOT}/usr/sbin/policy-rc.d << EOF
+#!/bin/sh
+echo "All runlevel operations denied by policy" >&2
+exit 101
+EOF
+
+	chmod +x ${CHROOT}/usr/sbin/policy-rc.d
+}
+
+__patch_initctl() {
+	# Based on https://github.com/docker/docker/blob/master/contrib/mkimage-debootstrap.sh
+	# initctl (for some pesky upstart scripts)
+	ch_exec "dpkg-divert --local --rename --add /sbin/initctl"
+	ln -sf /bin/true ${CHROOT}/sbin/initctl
+	# see https://github.com/docker/docker/issues/446#issuecomment-16953173
+}
+
+__clean_apt() {
+	# Based on https://github.com/docker/docker/blob/master/contrib/mkimage-debootstrap.sh
+	# shrink the image, since apt makes us fat (wheezy: ~157.5MB vs ~120MB)
+	ch_exec "apt-get clean"
+}
+
+__patch_apt_conf() {
+	# Based on https://github.com/docker/docker/blob/master/contrib/mkimage-debootstrap.sh
+	# we want to effectively run "apt-get clean" after every install to keep images small (see output of "apt-get clean -s" for context)
+	{
+		aptGetClean='"rm -f /var/cache/apt/archives/*.deb /var/cache/apt/archives/partial/*.deb /var/cache/apt/*.bin || true";'
+		echo "DPkg::Post-Invoke { ${aptGetClean} };"
+		echo "APT::Update::Post-Invoke { ${aptGetClean} };"
+		echo 'Dir::Cache::pkgcache ""; Dir::Cache::srcpkgcache "";'
+	} | sudo tee etc/apt/apt.conf.d/no-cache > /dev/null
+
+	# and remove the translations, too
+	echo 'Acquire::Languages "none";' | sudo tee etc/apt/apt.conf.d/no-languages > /dev/null
 }
 
 # -----------------------------------------------
