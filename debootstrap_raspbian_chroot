@@ -395,7 +395,16 @@ __install_rpi_tools() {
 	fix_library ${toolchain_dir}/libc lib
 
 	do_log "Fixing compiler binaries names to be without triplets"
-	(cd ${CHROOT}/${toolchain_dir}/bin; for i in *; do ln -sf ${i} $(echo ${i}|sed -e 's/arm-linux-gnueabihf-//g'); done )
+	(
+	cd ${CHROOT}/${toolchain_dir}/bin;
+	for old_name in *; do
+		new_name=$(echo ${old_name}|sed -e 's/arm-linux-gnueabihf-//g')
+
+		if [ "${old_name}" != "${new_name}" ]; then
+			ln -sf ${old_name} ${new_name}
+		fi
+	done
+	)
 
 	ALL_LIBS=" ${ALL_LIBS} $(get_lib ld-linux.so.[2-3]) $(get_lib libstdc++.so.6) $(get_lib libz.so.1) $(get_lib libgcc_s.so.1)"
 	ALL_LIBS=" ${ALL_LIBS} $(get_ldd_lib ${CHROOT}/${toolchain_dir}/bin/arm-linux-gnueabihf-gcc) "
