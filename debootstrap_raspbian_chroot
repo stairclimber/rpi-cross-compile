@@ -129,8 +129,10 @@ function log_on_error() {
 }
 trap log_on_error ERR
 
+OLD_CWD=`pwd`
 function cleanup_before_exit () {
   do_log "Cleaning up. Done"
+  cd ${OLD_CWD}
 }
 trap cleanup_before_exit EXIT
 
