@@ -4,6 +4,7 @@
 ################ WARNING ############################
 # THIS CHROOT VAR MUST BE SET !!!!!!!! be warned or it WILL break your system :)
 CHROOT=${CHROOT:-"/opt/db_raspbian"}
+CACHE_DIR=${CACHE_DIR:-"/opt"}
 # use mirrorbrain be nice to raspbian project...
 MIRROR=http://mirrordirector.raspbian.org/raspbian
 #MIRROR=http://archive.raspbian.org/raspbian
@@ -351,36 +352,53 @@ __determine_parameters() {
 	ALL_LIBS=$(ldconfig -p|egrep '(libnss_|ld-|libnsl|libz)'|cut -d '>' -f 2)
 }
 
+function fix_library() {
+	local target_dir="${CHROOT}/$1/$2"
+	local host_dir="${CHROOT}/$2"
+
+	mv     "${target_dir}" "${target_dir}-orig"
+	ln -sf "${host_dir}"   "${target_dir}"
+}
+
 __install_rpi_tools() {
 	# ===========================================
 	# Install the RPi cross compilation toolchain
 	# ===========================================
+	local master_zip_file="${CACHE_DIR}/master.zip"
+	local toolchain_name="gcc-linaro-arm-linux-gnueabihf-raspbian-x64"
+	local toolchain_dir="tools-master/arm-bcm2708/${toolchain_name}/arm-linux-gnueabihf"
+
 	# Prepare cross compiler to be able to run it from chroot in "real" arm env
 	###########(cd ${CHROOT} ; git clone https://github.com/raspberrypi/tools.git) ### way to slow....
 	if [ -f /opt/master.zip ]; then
 		cp /opt/master.zip ${CHROOT}
 	else
-		(cd ${CHROOT} ; git_archive_download https://github.com/raspberrypi/tools/archive/master.zip master.zip)
+		git_archive_download "https://github.com/raspberrypi/tools/archive/master.zip" "${master_zip_file}"
 	fi
 
 	#### security precaution for case that master.zip failed for some reason to be downloaded all destructive operations are done in correct place
 	set -e
 	(mkdir -p ${CHROOT}/etc/dpkg/dpkg.cfg.d/; echo "force-unsafe-io" > ${CHROOT}/etc/dpkg/dpkg.cfg.d/02apt-speedup)
-	(mkdir -p ${CHROOT}/usr ${CHROOT}/tools-master/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian/arm-linux-gnueabihf/libc/usr )
+	(mkdir -p ${CHROOT}/usr ${CHROOT}/${toolchain_dir}/libc/usr)
 
 	do_log "Unpacking compiler"
-	(cd ${CHROOT}; unzip -o master.zip)
-	(cd ${CHROOT}/usr; ln -sf ../tools-master/arm-bcm2708 cross)
+	(cd ${CHROOT}; unzip -o ${master_zip_file})
+	(cd ${CHROOT}; ln -sf usr/tools-master/arm-bcm2708 usr/cross)
+
+	do_log "Removing unneeded files"
+	# gcc-linaro-arm-linux-gnueabihf-raspbian-x64
+	(cd ${CHROOT}/tools-master/arm-bcm2708; rm -rf arm-bcm2708hardfp-linux-gnueabi arm-bcm2708-linux-gnueabi)
 
 	do_log "Fixing build root includes and libraries"
-	(cd ${CHROOT}/tools-master/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian/arm-linux-gnueabihf/libc/usr ; mv lib lib-orig; ln -sf /usr/lib lib; mv include include-orig ; ln -sf /usr/include include)
-	(cd ${CHROOT}/tools-master/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian/arm-linux-gnueabihf/libc ; mv lib lib-orig; ln -sf /lib lib)
+	fix_library ${toolchain_dir}/libc usr/lib
+	fix_library ${toolchain_dir}/libc usr/include
+	fix_library ${toolchain_dir}/libc lib
 
 	do_log "Fixing compiler binaries names to be without triplets"
-	(cd ${CHROOT}/tools-master/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian/bin; for i in * ; do ln -sf $i $(echo $i|sed -e 's/arm-linux-gnueabihf-//g') ;done )
+	(cd ${CHROOT}/${toolchain_dir}/bin; for i in *; do ln -sf ${i} $(echo ${i}|sed -e 's/arm-linux-gnueabihf-//g'); done )
 
 	ALL_LIBS=" ${ALL_LIBS} $(get_lib ld-linux.so.[2-3]) $(get_lib libstdc++.so.6) $(get_lib libz.so.1) $(get_lib libgcc_s.so.1)"
-	ALL_LIBS=" ${ALL_LIBS} $(get_ldd_lib ${CHROOT}/tools-master/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian/bin/arm-linux-gnueabihf-gcc) "
+	ALL_LIBS=" ${ALL_LIBS} $(get_ldd_lib ${CHROOT}/${toolchain_dir}/bin/arm-linux-gnueabihf-gcc) "
 	set +e
 }
 
@@ -414,7 +432,7 @@ __copy_host_binaries_to_chroot() {
 	# Special patches for the shell
 	# =============================
 	do_log "Replacing dash for bash"
-	(cd  ${CHROOT}/bin; ln -sf bash sh)
+	(cd ${CHROOT}/bin; ln -sf bash sh)
 }
 
 __fix_libraries() {
