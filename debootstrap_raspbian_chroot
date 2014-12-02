@@ -246,8 +246,17 @@ EOF
 
 __setup_debootstrap_chroot() {
 	do_log "Calling debootstrap to setup the chroot environment..."
+
+	local extra_args=""
+	if [ ! -z ${DEBOOTSTRAP_VARIANT} ]; then
+		extra_args+=" --variant=${DEBOOTSTRAP_VARIANT}"
+	fi
+	if [ ! -z ${DEBOOTSTRAP_INCLUDE} ]; then
+		extra_args+=" --include=${DEBOOTSTRAP_INCLUDE}"
+	fi
+
 	set -x
-	debootstrap --no-check-gpg --arch=armhf --verbose wheezy ${CHROOT} ${MIRROR}
+	debootstrap --no-check-gpg --arch=armhf ${extra_args} --verbose wheezy ${CHROOT} ${MIRROR}
 	set +x
 }
 
