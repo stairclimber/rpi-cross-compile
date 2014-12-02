@@ -18,13 +18,46 @@ ADDITIONAL_PACKAGES="coreutils less sudo gawk"
 ADDITIONAL_PACKAGES+=" gcc g++ gettext libc6-dev git git-core"
 ADDITIONAL_PACKAGES+=" autoconf automake devscripts libtool make pkg-config"
 
+### Packages
+#####################################################################
+
+function require_packages () {
+	local OLD_IFS="${IFS:- }"
+	IFS=" "
+	ADDITIONAL_PACKAGES+=" "
+	ADDITIONAL_PACKAGES+="$*"
+	IFS="${OLD_IFS}"
+}
+
+module:texteditor () { require_packages joe; }
+module:openssh    () { require_packages openssh-client openssh-server; }
+module:db 		  () { require_packages libsqlite3-dev libgdbm-dev libdb-dev; }
+module:misc       () { require_packages libjpeg62-dev libncurses5-dev; }
+module:perl       () { require_packages libperl-dev; }
+module:python     () { require_packages python-dev; }
+
+variant:default   () {
+	DEBOOTSTRAP_VARIANT=''
+	DEBOOTSTRAP_INCLUDE=''
+}
+
+variant:minbase   () {
+	DEBOOTSTRAP_VARIANT='minbase'
+	DEBOOTSTRAP_INCLUDE='iproute,iputils-ping'
+}
+
+### Settings
+#####################################################################
+
+variant:minbase
+
 if [ ${INSTALL_ADDITIONAL_PACKAGES} -eq 1 ]; then
-	ADDITIONAL_PACKAGES+=" joe"
-	ADDITIONAL_PACKAGES+=" openssh-client openssh-server"
-	ADDITIONAL_PACKAGES+=" libsqlite3-dev libgdbm-dev libdb-dev"
-	ADDITIONAL_PACKAGES+=" libjpeg62-dev libncurses5-dev"
-	ADDITIONAL_PACKAGES+=" libperl-dev"
-	ADDITIONAL_PACKAGES+=" python-dev"
+	module:texteditor
+	module:openssh
+	module:db
+	module:misc
+	module:perl
+	module:python
 fi
 
 ### Runtime
