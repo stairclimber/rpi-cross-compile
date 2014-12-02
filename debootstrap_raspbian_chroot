@@ -315,6 +315,8 @@ __clean_apt() {
 
 __patch_apt_conf() {
 	# Based on https://github.com/docker/docker/blob/master/contrib/mkimage-debootstrap.sh
+	cd ${CHROOT}
+
 	# we want to effectively run "apt-get clean" after every install to keep images small (see output of "apt-get clean -s" for context)
 	{
 		aptGetClean='"rm -f /var/cache/apt/archives/*.deb /var/cache/apt/archives/partial/*.deb /var/cache/apt/*.bin || true";'
