@@ -327,15 +327,15 @@ __install_rpi_tools() {
 	(mkdir -p ${CHROOT}/usr ${CHROOT}/tools-master/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian/arm-linux-gnueabihf/libc/usr )
 
 	do_log "Unpacking compiler"
-	(cd ${CHROOT}; unzip master.zip)
-	(cd ${CHROOT}/usr; ln -s ../tools-master/arm-bcm2708 cross)
+	(cd ${CHROOT}; unzip -o master.zip)
+	(cd ${CHROOT}/usr; ln -sf ../tools-master/arm-bcm2708 cross)
 
 	do_log "Fixing build root includes and libraries"
-	(cd ${CHROOT}/tools-master/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian/arm-linux-gnueabihf/libc/usr ; mv lib lib-orig; ln -s /usr/lib lib; mv include include-orig ; ln -s /usr/include include)
-	(cd ${CHROOT}/tools-master/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian/arm-linux-gnueabihf/libc ; mv lib lib-orig; ln -s /lib lib)
+	(cd ${CHROOT}/tools-master/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian/arm-linux-gnueabihf/libc/usr ; mv lib lib-orig; ln -sf /usr/lib lib; mv include include-orig ; ln -sf /usr/include include)
+	(cd ${CHROOT}/tools-master/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian/arm-linux-gnueabihf/libc ; mv lib lib-orig; ln -sf /lib lib)
 
 	do_log "Fixing compiler binaries names to be without triplets"
-	(cd ${CHROOT}/tools-master/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian/bin; for i in * ; do ln -s $i $(echo $i|sed -e 's/arm-linux-gnueabihf-//g') ;done )
+	(cd ${CHROOT}/tools-master/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian/bin; for i in * ; do ln -sf $i $(echo $i|sed -e 's/arm-linux-gnueabihf-//g') ;done )
 
 	ALL_LIBS=" ${ALL_LIBS} $(get_lib ld-linux.so.[2-3]) $(get_lib libstdc++.so.6) $(get_lib libz.so.1) $(get_lib libgcc_s.so.1)"
 	ALL_LIBS=" ${ALL_LIBS} $(get_ldd_lib ${CHROOT}/tools-master/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian/bin/arm-linux-gnueabihf-gcc) "
@@ -399,7 +399,7 @@ __fix_libraries() {
 
 	# debian has ld-linux-x86-64.so.2 as link only in /lib64 so re-create it
 	# for opensuse it will just fail with no issues
-	(cd ${CHROOT}/lib64 ; ln -s /lib/x86_64-linux-gnu/ld-linux-x86-64.so.2 ld-linux-x86-64.so.2 2>/dev/null)
+	(cd ${CHROOT}/lib64 ; ln -sf /lib/x86_64-linux-gnu/ld-linux-x86-64.so.2 ld-linux-x86-64.so.2 2>/dev/null)
 }
 
 # -----------------------------------------------
