@@ -420,7 +420,7 @@ __install_rpi_tools() {
 
 	do_log "Unpacking compiler"
 	(unzip -o ${master_zip_file})
-	(ln -sf usr/tools-master/arm-bcm2708 usr/cross)
+	(ln -sf tools-master/arm-bcm2708 usr/cross)
 
 	do_log "Removing unneeded files"
 	# gcc-linaro-arm-linux-gnueabihf-raspbian-x64
